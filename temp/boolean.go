@@ -10,4 +10,9 @@ func main() {
 		fmt.Printf("p=%t\tq=%t\tp & q = %t\tp | q = %t\tp ^ q = %t\n", pq[0], pq[1], (pq[0] && pq[1]), (pq[0] || pq[1]), (pq[0] != pq[1]))
 
 	}
+
+	var a int
+	var b float64
+	fmt.Scanln(&a, &b)
+	fmt.Println(a, int(b))
 }
