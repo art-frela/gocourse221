@@ -5,6 +5,7 @@ homework-01 is console util which doing three things:
 - calculates the amount of the deposit in the bank and the annual interest
 
 Author: Artem K mailto:art.frela@gmail.com
+Date: 2019-04-21
 */
 package main
 
