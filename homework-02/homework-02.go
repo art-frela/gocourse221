@@ -133,7 +133,7 @@ Type some number 1, 2, 3, 4, 5 and press Enter.`
 	}
 }
 
-// checkRemain - check parity, returns "odd" or "even" for Integer argument
+// checkRemain - checks for the remainder of the division, returns true if it is
 func checkRemain(dividend, divisor int) (isremain bool) {
 	if dividend%divisor > 0 {
 		isremain = true
