@@ -121,7 +121,7 @@ Type some number 1, 2, 3, 4, 5 and press Enter.`
 			continue
 		}
 
-		if programMode == 5 { //
+		if programMode == 5 { // print N simple numbers
 			if inputInt < 2 || inputInt > maxSimple {
 				fmt.Printf("You miss, try again. Error (%v)\n", err)
 				continue
