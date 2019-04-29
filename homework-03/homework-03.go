@@ -155,7 +155,7 @@ func reverseQueueMessage(inputQ []Message) (output []Message) {
 	return
 }
 
-// equal - compare maps, if equal return true
+// mapEq - compares maps, if equal return true
 func mapEq(left, right map[string][]int) bool {
 	if len(left) != len(right) {
 		return false
