@@ -17,6 +17,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"gocourse221/calculator"
+	"gocourse221/chees"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -81,6 +82,40 @@ func main() {
 			fmt.Printf("Результат: %v\n", res)
 		} else {
 			fmt.Println("Не удалось произвести вычисление")
+		}
+	}
+
+	fmt.Printf("\n\nTask 4 - chees possible moves for figures\n")
+	// CheesFields - field for chees play
+	var CheesField chees.Field
+	CheesField.Init()
+
+	for {
+		CheesField.PrintField()
+		fmt.Print("type \"exit\", type position X-Y (example 2-8 for kNight-black) for define possible moves > ")
+		if _, err := fmt.Scanln(&input); err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		if input == "exit" {
+			break
+		}
+		pos, err := chees.ProcessingInputToPosition(input)
+		if err != nil {
+			fmt.Printf("Some error happen, %v\n", err)
+			continue
+		}
+		err = CheesField.SetPossibleMoves(pos)
+		if err != nil {
+			fmt.Printf("Some error happen, %v\n", err)
+			continue
+		}
+		CheesField.PrintPossibleMoves()
+		fmt.Print("Press Enter for continue > ")
+		if _, err := fmt.Scanln(&input); err != nil {
+			fmt.Println(err)
+			continue
 		}
 	}
 

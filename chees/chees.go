@@ -1,55 +1,87 @@
 package chees
 
-type CheesField struct {
-	X      XAxis
-	Y      YAxis
-	Armies [2]CheesArmy
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+// Field - structure for chees filed
+type Field struct {
+	X           xAxis
+	Y           yAxis
+	Armies      [2]cheesArmy
+	SelectedFig cheesFigure
 }
 
-type XAxis [8]int
-type YAxis [8]int
+type xAxis [8]int
+type yAxis [8]int
 
+// Position - coordinates for figures X - Y int
 type Position [2]int
 
-type CheesFigure struct {
-	Name            string
-	Count           int
-	Directions      []MoveDirection
-	Shifts          []MoveShift
-	CurrentPosition Position
+type cheesFigure struct {
+	name                string
+	count               int
+	ixArmy              int
+	ixPosition          int
+	color               string
+	directions          []moveDirection
+	shifts              []moveShift
+	currentPosition     Position
+	perspectivePosition []Position
 }
 
-type MoveDirection string
+type moveDirection string
 
-type MoveShift [2]int
+type moveShift [2]int
 
-type CheesArmy struct {
-	Color   string
-	Figures []CheesFigure
+type cheesArmy struct {
+	color   string
+	figures []cheesFigure
 }
-
-var ChField CheesField
 
 // placeIsBorderOccupied - check position in the border of chees field and occupied,
 // return true if in border and donn't occupied
-func (chees CheesField) placeIsBorderAndFree(p Position) bool {
+func (chees Field) placeIsBorderAndFree(p Position) bool {
 	//check is border
 	isBorder := p[0] > 0 && p[0] <= len(chees.X) && p[1] > 0 && p[1] <= len(chees.Y)
-	isFree := false
+	isFree := true
 	for _, army := range chees.Armies {
-		for _, fig := range army.Figures {
-			if fig.CurrentPosition != p {
-				isFree = true
+		for _, fig := range army.figures {
+			if fig.currentPosition == p {
+				isFree = false
 			}
 		}
 	}
 	return isBorder && isFree
 }
 
-//
-func (fig CheesFigure) PossibleMoves(pos Position, chees CheesField) (possPos []Position) {
+// defineFigureAtPosition - fill Army index and position index and return CheesFigure at that position
+func (chees *Field) defineFigureAtPosition(pos Position) (fig cheesFigure) {
+	for ixa, a := range chees.Armies {
+		for ixp, f := range a.figures {
+			if pos == f.currentPosition {
+				chees.Armies[ixa].figures[ixp].ixPosition = ixp
+				return f
+			}
+		}
+	}
+	return
+}
+
+// SetPossibleMoves - calculate and fill PerspectivePosition for figure on the current position
+func (chees *Field) SetPossibleMoves(pos Position) (err error) {
 	//iterate by movies
-	for _, dir := range fig.Directions {
+	var possPos []Position
+	//define a figure at the specified position
+	fig := chees.defineFigureAtPosition(pos)
+	if fig.name == "" {
+		err = fmt.Errorf("selected position <%v> is empty", pos)
+		return
+	}
+	//
+	for _, dir := range fig.directions {
 		switch dir {
 		case "OX":
 			for _, x := range chees.X {
@@ -76,107 +108,137 @@ func (fig CheesFigure) PossibleMoves(pos Position, chees CheesField) (possPos []
 		}
 	}
 	//
-	for _, shift := range fig.Shifts {
+	for _, shift := range fig.shifts {
 		tmpPos := Position{pos[0] + shift[0], pos[1] + shift[1]}
 		if chees.placeIsBorderAndFree(tmpPos) {
 			possPos = append(possPos, tmpPos)
 		}
 	}
-	return possPos
+	//debug
+	//fmt.Printf("DEBUG INFO: possPos is %v\n", possPos)
+	chees.Armies[fig.ixArmy].figures[fig.ixPosition].perspectivePosition = possPos
+	chees.SelectedFig = chees.defineFigureAtPosition(pos)
+	chees.SelectedFig.perspectivePosition = possPos
+	return
 }
 
-// init - initialize chees field
-func (chees *CheesField) init() {
+// PrintPossibleMoves for the selected figure
+func (chees Field) PrintPossibleMoves() {
+	fmt.Printf("Possible movies for %s (%s):\n", chees.SelectedFig.name, chees.SelectedFig.color)
+	for i, v := range chees.SelectedFig.perspectivePosition {
+		fmt.Printf("Option-%d = %v\n", i, v)
+	}
+}
+
+// PrintField prints all figures at the field
+func (chees Field) PrintField() {
+
+	for _, a := range chees.Armies {
+		fmt.Printf("Army of %s\n", a.color)
+		for _, f := range a.figures {
+			if f.name != "" {
+				fmt.Printf("Figure [%s-%s] position is %v\n", f.name, f.color, f.currentPosition)
+			}
+
+		}
+	}
+}
+
+// ProcessingInputToPosition - process input text and make Position element
+func ProcessingInputToPosition(input string) (pos Position, err error) {
+	poselements := strings.Split(input, "-")
+	//fmt.Printf("slice %v, len(slice)=%d\n", poselements, len(poselements))
+	if len(poselements) != 2 {
+		err = fmt.Errorf("Wrong input format (%s), need x-y", input)
+		return
+	}
+	pos[0], err = strconv.Atoi(poselements[0])
+	if err != nil {
+		return
+	}
+	pos[1], err = strconv.Atoi(poselements[1])
+	return
+}
+
+// Init - initialize chees field
+func (chees *Field) Init() {
 	//make field axies
-	chees.X = XAxis{1, 2, 3, 4, 5, 6, 7, 8}
-	chees.Y = YAxis{1, 2, 3, 4, 5, 6, 7, 8}
+	chees.X = xAxis{1, 2, 3, 4, 5, 6, 7, 8}
+	chees.Y = yAxis{1, 2, 3, 4, 5, 6, 7, 8}
 	//make armies
 	//white
-	pawns := make([]CheesFigure, 8, 8)
+	army := make([]cheesFigure, 16, 16)
 	for i := 1; i <= len(chees.X); i++ {
-		pawn := CheesFigure{
-			Name:            "pawn",
-			Count:           8,
-			Shifts:          []MoveShift{{0, 1}},
-			CurrentPosition: Position{i, 2},
+		pawn := cheesFigure{
+			name:            "pawn",
+			count:           8,
+			ixArmy:          0,
+			color:           "white",
+			shifts:          []moveShift{{0, 1}},
+			currentPosition: Position{i, 2},
 		}
-		pawns = append(pawns, pawn)
+		army = append(army, pawn)
 	}
 
-	kNights := make([]CheesFigure, 2, 2)
-	kNights = append(kNights, CheesFigure{
-		Name:            "kNight",
-		Count:           2,
-		Shifts:          []MoveShift{{1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}},
-		CurrentPosition: Position{2, 1},
+	army = append(army, cheesFigure{
+		name:            "kNight",
+		count:           2,
+		ixArmy:          0,
+		color:           "white",
+		shifts:          []moveShift{{1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}},
+		currentPosition: Position{3, 5},
 	})
-	kNights = append(kNights, CheesFigure{
-		Name:            "kNight",
-		Count:           2,
-		Shifts:          []MoveShift{{1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}},
-		CurrentPosition: Position{7, 1},
+	army = append(army, cheesFigure{
+		name:            "kNight",
+		count:           2,
+		ixArmy:          0,
+		color:           "white",
+		shifts:          []moveShift{{1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}},
+		currentPosition: Position{4, 4},
 	})
 
-	armyfigs := make([]CheesFigure, 16, 16)
-	army = append(army, pawns)
-	army = append(army, kNights)
-
-	whiteArmy := CheesArmy{
-		Color:   "white",
-		Figures: army,
+	whiteArmy := cheesArmy{
+		color:   "white",
+		figures: army,
 	}
 
 	//black army
-	bpawns := make([]CheesFigure, 8, 8)
+	barmy := make([]cheesFigure, 16, 16)
+
 	for i := 1; i <= len(chees.X); i++ {
-		pawn := CheesFigure{
-			Name:            "pawn",
-			Count:           8,
-			Shifts:          []MoveShift{{0, 1}},
-			CurrentPosition: Position{i, 7},
+		pawn := cheesFigure{
+			name:            "pawn",
+			count:           8,
+			ixArmy:          1,
+			color:           "black",
+			shifts:          []moveShift{{0, 1}},
+			currentPosition: Position{i, 7},
 		}
-		bpawns = append(bpawns, pawn)
+		barmy = append(barmy, pawn)
 	}
 
-	bkNights := make([]CheesFigure, 2, 2)
-	bkNights = append(bkNights, CheesFigure{
-		Name:            "kNight",
-		Count:           2,
-		Shifts:          []MoveShift{{1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}},
-		CurrentPosition: Position{2, 1},
+	barmy = append(barmy, cheesFigure{
+		name:            "kNight",
+		count:           2,
+		ixArmy:          1,
+		color:           "black",
+		shifts:          []moveShift{{1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}},
+		currentPosition: Position{2, 8},
 	})
-	bkNights = append(kNights, CheesFigure{
-		Name:            "kNight",
-		Count:           2,
-		Shifts:          []MoveShift{{1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}},
-		CurrentPosition: Position{7, 1},
+	barmy = append(barmy, cheesFigure{
+		name:            "kNight",
+		count:           2,
+		ixArmy:          1,
+		color:           "black",
+		shifts:          []moveShift{{1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}},
+		currentPosition: Position{5, 6},
 	})
 
-	barmy := make([]CheesFigure, 16, 16)
-	barmy = append(army, bpawns)
-	barmy = append(army, bkNights)
-
-	blackArmy := CheesArmy{
-		Color:   "black",
-		Figures: barmy,
+	blackArmy := cheesArmy{
+		color:   "black",
+		figures: barmy,
 	}
-	armies := make([]CheesArmy)
-	armies = append(armies, whiteArmy)
-	armies = append(armies, blackArmy)
+	armies := [2]cheesArmy{whiteArmy, blackArmy}
 
 	chees.Armies = armies
-}
-
-func init() {
-	//init chees field, armies, figures...
-	/*
-		Фигура	Русское сокращение	Английское сокращение
-		Король	Кр					K (king)
-		Ферзь	Ф					Q (queen)
-		Ладья	Л					R (rook)
-		Конь	К					N (kNight)
-		Слон	С					B (bishop)
-		Пешка	п или ничего		p (pawn) или ничего
-	*/
-
 }
