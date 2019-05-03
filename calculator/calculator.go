@@ -1,3 +1,11 @@
+/*
+package calculator
+implement simple ariphmetic, triginimetric, logic functions
+copypast from  teaching material
+
+Contributor: Artem K., mailto:art.frela@gmail.com
+Date: 2019-05-03
+*/
 package calculator
 
 import (

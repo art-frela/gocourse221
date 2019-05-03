@@ -1,6 +1,6 @@
 /*
 Author: Artem K., mailto:art.frela@gmail.com
-Date: 2019-05-02
+Date: 2019-05-03
 Task:
 1. Написать свой интерфейс и создать несколько структур, удовлетворяющих ему.
 2. Создать псевдоним типа телефонной книги и реализовать для него интерфейс Sort{}.
@@ -31,6 +31,7 @@ const (
 )
 
 func main() {
+	// [TASK 1 demo]
 	fmt.Printf("Task 1 - implement Storager interface, as JSON and XML storage\n")
 	jStorage := storageJSONfile{
 		filename: userjson,
@@ -52,7 +53,9 @@ func main() {
 	xuid, _ := xStorage.Insert(usr)
 	fmt.Printf("For user %v, juid=%d, xuid=%d\n", usr, juid, xuid)
 
+	// [TASK 2 demo]
 	fmt.Printf("Task 2 - implement Sort{} interface, for PhoneBook\n")
+
 	var phonebook PhoneBook
 	phonebook = PhoneBook(jStorage.data)
 	fmt.Println("Storage before Sort")
@@ -61,6 +64,7 @@ func main() {
 	fmt.Println("Storage after Sort")
 	phonebook.String()
 
+	// [TASK 3 demo]
 	fmt.Printf("\n\nTask 3 - envelop Calculator, add HELP text\n")
 	input := ""
 	for {
@@ -84,6 +88,8 @@ func main() {
 			fmt.Println("Не удалось произвести вычисление")
 		}
 	}
+
+	// // [TASK 4 demo]
 
 	fmt.Printf("\n\nTask 4 - chees possible moves for figures\n")
 	// CheesFields - field for chees play

@@ -1,3 +1,14 @@
+/*
+package chees
+implement simple logic behavior of chees figures on the field
+
+Implement only for kNights (Horses)
+Side of the field is ignored
+Verification of occupied positions
+Field has  coordinates of position in the digit format A=1, B=2 ...
+Autor: Artem K., mailto:art.frela@gmail.com
+Date: 2019-05-03
+*/
 package chees
 
 import (
