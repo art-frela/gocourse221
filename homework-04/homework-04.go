@@ -16,13 +16,14 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"gocourse221/calculator"
-	"gocourse221/chees"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"sort"
 	"time"
+
+	"./calculator"
+	"./chees"
 )
 
 const (
@@ -39,8 +40,23 @@ func main() {
 	xStorage := storageXMLfile{
 		filename: userxml,
 	}
-	jStorage.readStorage()
-	xStorage.readStorage()
+	err := jStorage.readStorage()
+	errHandler("read JSON storage", err)
+
+	err = xStorage.readStorage()
+	errHandler("read XML storage", err)
+
+	var bookX PhoneBook
+	var bookJ PhoneBook
+	// fill book from JSON storage
+	err = bookJ.read(&jStorage)
+	errHandler("fill phonebook from JSON storage", err)
+
+	// fill book from XML storage
+	err = bookX.read(&xStorage)
+	errHandler("fill phonebook from XML storage", err)
+
+	//generate random data for phone fill
 	rand.Seed(time.Now().UnixNano())
 	someAge := rand.Intn(100)
 	someName := fmt.Sprintf("SomeName-%d", someAge)
@@ -49,8 +65,12 @@ func main() {
 		Age:      someAge,
 		Phones:   []Phone{"+79017776655", "+7108033334455"},
 	}
-	juid, _ := jStorage.Insert(usr)
-	xuid, _ := xStorage.Insert(usr)
+	juid, err := bookJ.newUser(&jStorage, usr)
+	errHandler("insert new user to JSON storage", err)
+
+	xuid, err := bookJ.newUser(&xStorage, usr)
+	errHandler("insert new user to JSON storage", err)
+
 	fmt.Printf("For user %v, juid=%d, xuid=%d\n", usr, juid, xuid)
 
 	// [TASK 2 demo]
@@ -129,12 +149,20 @@ func main() {
 
 // [TASK 1]
 
+// errHandler - simple error handler
+func errHandler(stage string, err error) {
+	if err != nil {
+		fmt.Printf("%s. Some error happen <%v>\n", stage, err)
+	}
+}
+
 // Storager - interface for storage
 type Storager interface {
 	readStorage() error
 	saveStorage() error
 	GetByID(int) (User, error)
 	Insert(User) (int, error)
+	exportData() PhoneBook
 }
 
 // [Implementation for JSON Storage]
@@ -143,6 +171,49 @@ type Storager interface {
 type storageJSONfile struct {
 	filename string
 	data     []User
+}
+
+// storageXMLfile - implementation fo Storager interface
+type storageXMLfile struct {
+	filename string
+	data     []User
+}
+
+// Phone - type for phone numbers
+type Phone string
+
+// User - structure for describe of humans
+type User struct {
+	XMLName  xml.Name `xml:"Users" json:"-"`
+	UID      int      `xml:"UId" json:"uid"`
+	NickName string   `xml:"NickName" json:"nickname"`
+	Age      int      `xml:"Age" json:"age"`
+	Phones   []Phone  `xml:"Phones>Phone" json:"phones"`
+}
+
+// PhoneBook - type of slice Users
+type PhoneBook []User
+
+// read - fill phonebook from storage
+func (pb *PhoneBook) read(storage Storager) (err error) {
+	err = storage.readStorage()
+	if err != nil {
+		return
+	}
+	*pb = storage.exportData()
+	return
+}
+
+// getUserByID - fill phonebook from storage
+func (pb *PhoneBook) getUserByID(storage Storager, uid int) (usr User, err error) {
+	usr, err = storage.GetByID(uid)
+	return
+}
+
+// newUser - insert new user to the phonebook
+func (pb *PhoneBook) newUser(storage Storager, usr User) (uid int, err error) {
+	uid, err = storage.Insert(usr)
+	return
 }
 
 // readStorage - read data from file
@@ -158,8 +229,8 @@ func (storage *storageJSONfile) readStorage() (err error) {
 	return
 }
 
-// readStorage - read data from file
-func (storage storageJSONfile) saveStorage() (err error) {
+// saveStorage - read data from file
+func (storage *storageJSONfile) saveStorage() (err error) {
 	dataSave, err := json.Marshal(storage.data)
 	//save to disk
 	err = ioutil.WriteFile(storage.filename, dataSave, 0644)
@@ -168,7 +239,7 @@ func (storage storageJSONfile) saveStorage() (err error) {
 
 // GetByID - implement method for interface Storager
 // returns User data by UID
-func (storage storageJSONfile) GetByID(uid int) (u User, err error) {
+func (storage *storageJSONfile) GetByID(uid int) (u User, err error) {
 	err = fmt.Errorf("User with ID=%d is't exist", uid)
 	for _, usr := range storage.data {
 		if usr.UID == uid {
@@ -180,7 +251,7 @@ func (storage storageJSONfile) GetByID(uid int) (u User, err error) {
 
 // NewID - implement method for interface Storager
 // returns User data by UID
-func (storage storageJSONfile) NewID() (uid int) {
+func (storage *storageJSONfile) NewID() (uid int) {
 	for _, usr := range storage.data {
 		if usr.UID > uid {
 			uid = usr.UID
@@ -200,13 +271,13 @@ func (storage *storageJSONfile) Insert(usr User) (uid int, err error) {
 	return
 }
 
-// [implementation for XML Storage]
-
-// storageJSONfile - implementation fo Storager interface
-type storageXMLfile struct {
-	filename string
-	data     []User
+// exportData - return PhoneBook data
+func (storage *storageJSONfile) exportData() (data PhoneBook) {
+	data = PhoneBook(storage.data)
+	return
 }
+
+// [implementation for XML Storage]
 
 // readStorage - read data from file
 func (storage *storageXMLfile) readStorage() (err error) {
@@ -263,6 +334,12 @@ func (storage *storageXMLfile) Insert(usr User) (uid int, err error) {
 	return
 }
 
+// exportData - return PhoneBook data
+func (storage storageXMLfile) exportData() (data PhoneBook) {
+	data = PhoneBook(storage.data)
+	return
+}
+
 // [Task 2 Implement Sort{}]
 /*
 type Interface interface {
@@ -296,20 +373,3 @@ func (pb PhoneBook) String() {
 		fmt.Printf("UID:%d, Name:%s, Age:%d\n", val.UID, val.NickName, val.Age)
 	}
 }
-
-// [TASK 3 Evaluate calculator]
-
-// Phone - type for phone numbers
-type Phone string
-
-// User - structure for describe of humans
-type User struct {
-	XMLName  xml.Name `xml:"Users" json:"-"`
-	UID      int      `xml:"UId" json:"uid"`
-	NickName string   `xml:"NickName" json:"nickname"`
-	Age      int      `xml:"Age" json:"age"`
-	Phones   []Phone  `xml:"Phones>Phone" json:"phones"`
-}
-
-// PhoneBook - type of slice Users
-type PhoneBook []User
