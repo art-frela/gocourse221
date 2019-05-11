@@ -16,16 +16,61 @@ Tasks:
 	- сравнение времени: что [после], что [до], разницу в абсолютных значениях
 т.е. описать базовые возможности и за подробностями отправлять в исп литературу.
 
+	[TASK -2]
+	See ./readfile/readFile.go
+	Rationale for the decision
+	general:
+		- file ops is unsafe, error handler is needed
+		- user must to known what happen
+	use two diffrent way for reading content of file:
+	1. for small files - all in memory
+	2. for big files - use buffering
 
-
+	[TASK - 3 - use csvuse package]
+	for delete maked csv files use:
+	cd /path/to/gocourse221/homework-05
+	rm -rf *.csv
 */
 package main
 
 import (
 	"fmt"
+	"log"
+
+	"./csvuse"
+)
+
+const (
+	fileCSV string = "MyRetailCountingData.csv"
 )
 
 func main() {
 	fmt.Println("Hello Gophers!")
+	// [TASK 3] demo CSV processing
+	// makes one file with counting data of 5 shops
+	// reads that file and makes separete file for every shop and day
+	// STEP BY STEP
+	// 1. Generates "big" CSV file with counting data of 5 shops
+	// 2. Print first 20 strings of "big" CSV file (you can see random order of data and ";" separator)
+	// 3. Separate data from that file to different files for shops and days
+	// 4. Print first 5 strings of those files (you can see filtered data with "," separator)
+
+	// Generates "big" CSV file with counting data of 5 shops
+	genCountFile, err := csvuse.GenerateCountData(fileCSV)
+	if err != nil {
+		log.Fatalf("Error of generate random CSV file, %v", err)
+	}
+	// Print first 20 strings of "big" CSV file (you can see random order of data and ";" separator)
+	fmt.Println("content source file", genCountFile.FileName, "is:\n", genCountFile.String(20))
+
+	// Separate data from that file to different files for shops and days
+	sepFiles, err := genCountFile.Separate()
+	if err != nil {
+		log.Fatalf("Error of separate file, %v", err)
+	}
+	// Print first 5 strings of those files (you can see filtered data with "," separator)
+	for _, fileShop := range sepFiles {
+		fmt.Println(fileShop.FileName, "\n", fileShop.String(5))
+	}
 
 }
