@@ -16,12 +16,16 @@ Date: 2019-05-15
 package main
 
 import (
+	"fmt"
+	"html/template"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
 	"log"
+	"net/http"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -30,6 +34,66 @@ func main() {
 	if err != nil {
 		log.Fatalf("Draw rect error, %v", err)
 	}
+
+	// [TASK 3]
+	fs := http.FileServer(http.Dir("img"))
+	http.Handle("/", fs)
+	http.HandleFunc("/hello/", helloPicture)
+	log.Fatal(http.ListenAndServe(":8000", nil))
+}
+
+// helloPicture - makes rectangle and show it on the page + parameters
+func helloPicture(w http.ResponseWriter, r *http.Request) {
+	// try get needed parameters for make specified rectangle
+	bgColor := r.URL.Query().Get("bgcolor")
+	lnColor := r.URL.Query().Get("lncolor")
+	parts := r.URL.Query().Get("count")
+	// get all keys
+	keys := r.URL.Query()
+	// DataT - structure for force to template parser
+	type DataT struct {
+		Title string
+		Query []string
+		Image string
+	}
+	// params slice
+	params := make([]string, len(keys))
+	i := 0
+	// fill params of values
+	for key, value := range keys {
+		params[i] = fmt.Sprintf("%s=%s", key, value)
+		i++
+	}
+	// template name
+	tName := "task3.gohtml"
+	fileimage := "httpRectangle.png"
+	fileimagedir := "./img/" + fileimage
+	data := DataT{
+		Title: "Task-03",
+		Query: params,
+		Image: fileimage,
+	}
+	// parseInt from string
+	intParts, _ := strconv.Atoi(parts)
+
+	// make img for request parameters
+	err := drawRectangleWithLines(bgColor, lnColor, 400, 400, intParts, fileimagedir)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "<html><body><h3 color=\"red\">Error: %v</h3></body></html>", err)
+		return
+	}
+	// prepare template
+	myT := template.Must(template.ParseGlob("./templates/*"))
+	w.WriteHeader(http.StatusOK)                // 200 OK
+	w.Header().Set("Content-Type", "text/html") //
+	err = myT.ExecuteTemplate(w, tName, data)   // write to response body template with data
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "<html><body><h3 color=\"red\">Error: %v</h3></body></html>", err)
+		return
+	}
+
 }
 
 // drawRectangle With Lines - makes a rectangle with a COLOR background, with LNCOLOR lines that divide the field into countParts elements along each axis
@@ -58,6 +122,9 @@ func drawRectangleWithLines(bgcolor, lncolor string, dx, dy, countParts int, fil
 	lnColorRGBA, ok := colors[lncolor]
 	if !ok {
 		lnColorRGBA = colors["red"]
+	}
+	if countParts == 0 {
+		countParts = 8
 	}
 
 	rectangle := rectBorder{

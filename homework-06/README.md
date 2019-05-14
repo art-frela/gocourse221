@@ -12,4 +12,5 @@
 
 1. Смотри папку statistics
 2. `cd /path/to/gocource221/homework-06/ && go run homework-06.go`
-3.  
+3. `cd /path/to/gocource221/homework-06/ && go run homework-06.go` and http://localhost:8000/hello/?bgcolor=red&lncolor=blue&count=19&parameterunknown=900
+4. may be later, don't have a time with 5th (it simple)
