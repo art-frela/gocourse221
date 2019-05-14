@@ -11,4 +11,5 @@
 ## Solutions
 
 1. Смотри папку statistics
-2. 
+2. `cd /path/to/gocource221/homework-06/ && go run homework-06.go`
+3.  
