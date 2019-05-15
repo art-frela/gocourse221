@@ -21,6 +21,24 @@
           {{ range .Query }}
           <li>{{ . }}</li>
           {{ end }}
+          <li>
+            <a href="/chess/?blackcolor=black&whitecolor=white&count=8">Classic chees fiels</a>
+          </li>
+          <li>
+            <a href="/chess/?blackcolor=blue&whitecolor=yellow&count=8">Ukrain chees fiels</a>
+          </li>
+          <li>
+            <a href="/chess/?blackcolor=red&whitecolor=white&count=8">USSA chees fiels</a>
+          </li>
+          <li>
+            <a href="/hello/?bgcolor=white&lncolor=blue&count=3">Field 3x3 white&blue</a>
+          </li>
+          <li>
+            <a href="/hello/?bgcolor=green&lncolor=red&count=14">Field 14x14 green&red</a>
+          </li>
+          <li>
+            <a href="/hello/?bgcolor=red&lncolor=blue&count=8">Field 8x8 red&blue</a>
+          </li>
         </ul>
         <h3><img src="../{{ .Image }}" /></h3>
       </div>

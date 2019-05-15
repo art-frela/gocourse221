@@ -13,4 +13,5 @@
 1. Смотри папку statistics
 2. `cd /path/to/gocource221/homework-06/ && go run homework-06.go`
 3. `cd /path/to/gocource221/homework-06/ && go run homework-06.go` and http://localhost:8000/hello/?bgcolor=red&lncolor=blue&count=19&parameterunknown=900
-4. may be later, don't have a time with 5th (it simple)
+4. implement in the statistic package. `cd /path/to/gocource221/homework-06/statistic/ && go test -v -cover`
+5. done, use like 3. add std link
